@@ -7,6 +7,8 @@
 #    Coded by: Maria Gabriela Quilarque  <gabriela@openerp.com.ve>
 #    Planified by: Nhomar Hernandez <nhomar@vauxoo.com>
 #    Audited by: Maria Gabriela Quilarque  <gabriela@openerp.com.ve>
+#    Modified by: Daniel Blanco <daniel@blancomartin.cl>
+#    
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as published by
@@ -37,37 +39,64 @@ class res_currency_rate(osv.Model):
     }
 
 
-class res_currency(osv.Model):
+# class res_currency(osv.Model):
+# 
+#     def _current_rate(self, cr, uid, ids, name, arg, context=None):
+#         if context is None:
+#             context = {}
+#         res = {}
+#         if 'date' in context:
+#             date = context['date']
+#         else:
+#             date = time.strftime('%Y-%m-%d')
+#         date = date or time.strftime('%Y-%m-%d')
+#         for id in ids:
+#             cr.execute(
+#                 "SELECT currency_id, rate\
+#                     FROM res_currency_rate\
+#                 WHERE currency_id = %s\
+#                 AND name <= %s\
+#                 ORDER BY name desc LIMIT 1", (id, date))
+#             if cr.rowcount:
+#                 id, rate = cr.fetchall()[0]
+#                 res[id] = rate
+#             else:
+#                 res[id] = 0
+#         return res
+# 
+#     _inherit = "res.currency"
+#     _columns = {
+#         'rate': fields.function(_current_rate, method=True,
+#             string='Current Rate', digits_compute=dp.get_precision('Currency'),
+#             help='The rate of the currency to the currency of rate 1'),
+#         'rounding': fields.float('Rounding factor',
+#             digits_compute=dp.get_precision('Currency')),
+# 
+#     }
 
-    def _current_rate(self, cr, uid, ids, name, arg, context=None):
-        if context is None:
-            context = {}
-        res = {}
-        if 'date' in context:
-            date = context['date']
-        else:
-            date = time.strftime('%Y-%m-%d')
-        date = date or time.strftime('%Y-%m-%d')
-        for id in ids:
-            cr.execute(
-                "SELECT currency_id, rate\
-                    FROM res_currency_rate\
-                WHERE currency_id = %s\
-                AND name <= %s\
-                ORDER BY name desc LIMIT 1", (id, date))
-            if cr.rowcount:
-                id, rate = cr.fetchall()[0]
-                res[id] = rate
-            else:
-                res[id] = 0
-        return res
 
+class res_currency(osv.Model):    
+    _name = "res.currency"
     _inherit = "res.currency"
-    _columns = {
-        'rate': fields.function(_current_rate, method=True,
-            string='Current Rate', digits_compute=dp.get_precision('Currency'),
-            help='The rate of the currency to the currency of rate 1'),
-        'rounding': fields.float('Rounding factor',
-            digits_compute=dp.get_precision('Currency')),
+    
+    def _current_rate(self, cr, uid, ids, name, arg, context=None):
+        return super(
+            res_currency,self)._current_rate(cr, uid, ids, name, arg, context)
 
+    def _current_rate_silent(self, cr, uid, ids, name, arg, context=None):
+        return super(
+            res_currency,self)._current_rate_silent(
+            cr, uid, ids, name, arg, context)
+
+    _columns = {
+        'rate': fields.function(
+            _current_rate, string='Current Rate',
+            digits_compute=dp.get_precision('Currency'),
+            help='The rate of the currency to the currency of rate 1.'),
+
+        'rate_silent': fields.function(_current_rate_silent, string='Current Rate',
+            digits_compute=dp.get_precision('Currency'),
+                help="""The rate of the currency to the currency of rate 1 
+    (0 if no rate defined).""")
     }
+
